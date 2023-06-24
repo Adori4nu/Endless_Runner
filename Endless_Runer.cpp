@@ -1,4 +1,20 @@
 #include <raylib.h>
+#include <vector>
+
+struct AnimData
+{
+    Rectangle rect;
+    Vector2 pos;
+    int frame;
+};
+
+struct EnemyNebula
+{
+    AnimData anim_data;
+    int spawn_distance;
+    Color color;
+    int speed;
+};
 
 int main()
 {
@@ -19,39 +35,59 @@ int main()
     
     // player
     Texture2D player_texture = LoadTexture("textures/scarfy.png");
-    Rectangle player_rect
-    {
+    AnimData player_anim;
+    player_anim.rect = {
         0,
         0,
         player_texture.width / 6,
         player_texture.height
     };
-    Vector2 player_pos
-    {
-        screenWidth / 2 - player_rect.width / 2,
-        screenHeight - player_rect.height
+    player_anim.pos = {
+        screenWidth / 2 - player_anim.rect.width / 2,
+        screenHeight - player_anim.rect.height
     };
+    player_anim.frame = 0;
     float running_time{};
 
     // enemy
-    const int enemy_nebula_speed{-600};
+    int enemy_nebula_speed{-600};
     Texture2D enemy_nebula_texture = LoadTexture("textures/12_nebula_spritesheet.png");
-    Rectangle enemy_nebula_rect
-    {
-        0,
-        0,
-        enemy_nebula_texture.width / 8,
-        enemy_nebula_texture.height / 8
-    };
-    Vector2 enemy_nebula_pos
-    {
-        screenWidth,
-        screenHeight - enemy_nebula_rect.height
-    };
+    int single_sprite_width{enemy_nebula_texture.width / 8};
+    int single_sprite_height{enemy_nebula_texture.height / 8};
 
-
-    int player_frame{};
-    int nebula_frame{};
+    std::vector<EnemyNebula> enemy_nebulas
+    {
+        {
+            {
+                Rectangle{0, 0, single_sprite_width, single_sprite_height},
+                Vector2{screenWidth, screenHeight - single_sprite_height},
+                0
+            },
+            screenWidth,
+            WHITE,
+            enemy_nebula_speed
+        },
+        {
+            {
+                Rectangle{0, single_sprite_height, single_sprite_width, single_sprite_height},
+                Vector2{screenWidth * 2 + 450, screenHeight * 0.5 - single_sprite_height},
+                0
+            },
+            screenWidth * 2 + 450,
+            RED,
+            enemy_nebula_speed * 1.125
+        },
+        {
+            {
+                Rectangle{0, single_sprite_height, single_sprite_width, single_sprite_height},
+                Vector2{screenWidth * 3, screenHeight - single_sprite_height * 1.25},
+                0
+            },
+            screenWidth * 3,
+            BLUE,
+            enemy_nebula_speed * 0.65
+        }
+    };
 
     //--------------------------------------------------------------------------------------
 
@@ -70,22 +106,25 @@ int main()
             
             if (!is_in_air)
             {        
-                player_rect.x = player_frame * player_rect.width;
-                player_frame++;
-                if (player_frame > 5)
+                player_anim.rect.x = player_anim.frame * player_anim.rect.width;
+                player_anim.frame++;
+                if (player_anim.frame > 5)
                 {
-                    player_frame = 0;
+                    player_anim.frame = 0;
                 }
             }
-            enemy_nebula_rect.x = nebula_frame * enemy_nebula_rect.width;
-            nebula_frame++;
-            if (nebula_frame > 7)
+            for (auto& nebula : enemy_nebulas)
             {
-                nebula_frame = 0;
+                nebula.anim_data.rect.x = nebula.anim_data.frame * nebula.anim_data.rect.width;
+                nebula.anim_data.frame++;
+                if (nebula.anim_data.frame > 7)
+                {
+                    nebula.anim_data.frame = 0;
+                }
             }
         }
         
-        if (player_pos.y >= screenHeight - player_rect.height)
+        if (player_anim.pos.y >= screenHeight - player_anim.rect.height)
         {
             velocity_y = 0;
             is_in_air = false;
@@ -95,21 +134,23 @@ int main()
             velocity_y += gravity * delta_time;
         }
 
-        if (IsKeyPressed(KEY_SPACE) && player_pos.y >= 0 && !is_in_air)
+        if (IsKeyPressed(KEY_SPACE) && player_anim.pos.y >= 0 && !is_in_air)
         {
             velocity_y += velocity_of_jump;
             is_in_air = true;
         }
         
-        player_pos.y += velocity_y * delta_time;
+        player_anim.pos.y += velocity_y * delta_time;
 
-        if (enemy_nebula_pos.x + enemy_nebula_rect.width < 0)
+        for (auto& nebula : enemy_nebulas)
         {
-            enemy_nebula_pos.y = GetRandomValue(screenHeight * 0.5, screenHeight - enemy_nebula_rect.height);
-            enemy_nebula_pos.x = screenWidth;
+            if (nebula.anim_data.pos.x + nebula.anim_data.rect.width < 0)
+            {
+                nebula.anim_data.pos.y = GetRandomValue(screenHeight * 0.5, screenHeight - nebula.anim_data.rect.height);
+                nebula.anim_data.pos.x = nebula.spawn_distance;
+            }
+            nebula.anim_data.pos.x += nebula.speed * delta_time;
         }
-
-        enemy_nebula_pos.x += enemy_nebula_speed * delta_time;
        
         //----------------------------------------------------------------------------------
 
@@ -119,9 +160,11 @@ int main()
 
         ClearBackground(RAYWHITE);
 
-        DrawTextureRec(player_texture, player_rect, player_pos, WHITE);
-        DrawTextureRec(enemy_nebula_texture, enemy_nebula_rect, enemy_nebula_pos, WHITE);
-        
+        DrawTextureRec(player_texture, player_anim.rect, player_anim.pos, WHITE);
+        DrawTextureRec(enemy_nebula_texture, enemy_nebulas[0].anim_data.rect, enemy_nebulas[0].anim_data.pos, enemy_nebulas[0].color);
+        DrawTextureRec(enemy_nebula_texture, enemy_nebulas[1].anim_data.rect, enemy_nebulas[1].anim_data.pos, enemy_nebulas[1].color);
+        DrawTextureRec(enemy_nebula_texture, enemy_nebulas[2].anim_data.rect, enemy_nebulas[2].anim_data.pos, enemy_nebulas[2].color);
+
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
