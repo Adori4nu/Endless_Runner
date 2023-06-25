@@ -274,6 +274,8 @@ int main()
                 DrawTextureRec(enemy_nebula_texture, nebula.anim_data.rect, nebula.anim_data.pos, nebula.color);
             }
         }
+        DrawText("Press [SPACE] to jump", 10, 10, 20, WHITE);
+        DrawText("Press [D] to double jump", 10, 30, 20, WHITE);
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
