@@ -209,6 +209,7 @@ int main()
         // player position logic and update
         if (player_anim.pos.y >= windowDimensions[1] - player_anim.rect.height)
         {
+            player_anim.pos.y = windowDimensions[1] - player_anim.rect.height;
             velocity_y = 0;
             is_in_air = false;
             double_jump_enable = true;
