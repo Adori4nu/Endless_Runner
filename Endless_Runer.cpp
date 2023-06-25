@@ -159,6 +159,9 @@ int main()
         }
     };
 
+    float finish_line{static_cast<float>(windowDimensions[0] * 10.0f)};
+    bool collision{false};
+
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -176,6 +179,30 @@ int main()
             for (auto& nebula : enemy_nebulas)
             {
                 nebula.anim_data = updateAnimData(nebula.anim_data, delta_time);
+            }
+        }
+
+        Rectangle player_collision
+        {
+            player_anim.pos.x,
+            player_anim.pos.y,
+            player_anim.rect.width,
+            player_anim.rect.height
+        };
+        for (auto& nebula : enemy_nebulas)
+        {
+            float pad{50};
+            Rectangle nebula_collision
+            {
+                nebula.anim_data.pos.x + pad,
+                nebula.anim_data.pos.y + pad,
+                nebula.anim_data.rect.width - 2 * pad,
+                nebula.anim_data.rect.height - 2 * pad
+            };
+            if (CheckCollisionRecs(player_collision, nebula_collision))
+            {
+                collision = true;
+                break;
             }
         }
         
@@ -215,6 +242,7 @@ int main()
             // movement from right to left
             nebula.anim_data.pos.x += nebula.speed * delta_time;
         }
+        finish_line += enemy_nebula_speed * delta_time;
        
         //----------------------------------------------------------------------------------
 
@@ -228,14 +256,24 @@ int main()
         {
             drawScrollingBackground(bg_plane, delta_time);
         }
-
-        DrawTextureRec(player_texture, player_anim.rect, player_anim.pos, WHITE);
-        
-        for (auto& nebula : enemy_nebulas)
+        if (collision)
         {
-            DrawTextureRec(enemy_nebula_texture, nebula.anim_data.rect, nebula.anim_data.pos, nebula.color);
+            DrawText("GAME OVER!", windowDimensions[0] * 0.5 - 100, windowDimensions[1] * 0.5, 50, RED);
         }
-        
+        else if (player_anim.pos.x >= finish_line)
+        {
+            DrawText("YOU WIN!", windowDimensions[0] * 0.5 - 100, windowDimensions[1] * 0.5, 50, BLUE);
+
+        }
+        else
+        {
+            DrawTextureRec(player_texture, player_anim.rect, player_anim.pos, WHITE);
+            
+            for (auto& nebula : enemy_nebulas)
+            {
+                DrawTextureRec(enemy_nebula_texture, nebula.anim_data.rect, nebula.anim_data.pos, nebula.color);
+            }
+        }
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
