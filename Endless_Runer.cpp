@@ -113,6 +113,8 @@ int main()
         }
     };
 
+    Texture2D background = LoadTexture("textures/far-buildings.png");
+    float bg_x_pos{0};
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -176,7 +178,18 @@ int main()
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-        ClearBackground(RAYWHITE);
+        ClearBackground(WHITE);
+        const float bg_scale = 6.0f;
+        bg_x_pos -= 20 * delta_time;
+        if (bg_x_pos <= -background.width * bg_scale)
+        {
+            bg_x_pos = 0.0f;
+        }
+        Vector2 bg1_pos{bg_x_pos, 0.0f};
+        DrawTextureEx(background, bg1_pos, 0.0f, bg_scale, WHITE);
+        Vector2 bg2_pos{bg_x_pos + background.width * bg_scale, 0.0f};
+        DrawTextureEx(background, bg2_pos, 0.0f, bg_scale, WHITE);
+
 
         DrawTextureRec(player_texture, player_anim.rect, player_anim.pos, WHITE);
         for (auto& nebula : enemy_nebulas)
@@ -190,8 +203,9 @@ int main()
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadTexture(player_texture); // Unload texture
-    UnloadTexture(enemy_nebula_texture); // Unload texture
+    UnloadTexture(player_texture);
+    UnloadTexture(enemy_nebula_texture);
+    UnloadTexture(background);
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
