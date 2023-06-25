@@ -1,5 +1,15 @@
 #include <raylib.h>
 #include <vector>
+#include <tuple>
+
+struct BgPlane
+{
+    Texture2D texture;
+    float x_pos;
+    float speed;
+    float scale;
+    Color tint;
+};
 
 struct AnimData
 {
@@ -35,6 +45,17 @@ AnimData updateAnimData(AnimData& data, float delta_time)
         }
     }
     return data;
+}
+
+void drawScrollingBackground(BgPlane& bg_plane, float delta_time)
+{
+    bg_plane.x_pos -= bg_plane.speed * delta_time;
+    if (bg_plane.x_pos <= -bg_plane.texture.width * bg_plane.scale)
+    {
+        bg_plane.x_pos = 0.0f;
+    }
+    DrawTextureEx(bg_plane.texture, Vector2{bg_plane.x_pos, 0}, 0.0f, bg_plane.scale, bg_plane.tint);
+    DrawTextureEx(bg_plane.texture, Vector2{bg_plane.x_pos + bg_plane.texture.width * bg_plane.scale, 0}, 0.0f, bg_plane.scale, bg_plane.tint);
 }
 
 int main()
@@ -113,8 +134,31 @@ int main()
         }
     };
 
-    Texture2D background = LoadTexture("textures/far-buildings.png");
-    float bg_x_pos{0};
+    std::vector<BgPlane> bg_planes
+    {
+        {
+            LoadTexture("textures/far-buildings.png"),
+            0.0f,
+            20.0f,
+            6.0f,
+            WHITE
+        },
+        {
+            LoadTexture("textures/back-buildings.png"),
+            0.0f,
+            50.0f,
+            6.0f,
+            WHITE
+        },
+        {
+            LoadTexture("textures/foreground.png"),
+            0.0f,
+            80.0f,
+            6.0f,
+            WHITE
+        }
+    };
+
     //--------------------------------------------------------------------------------------
 
     // Main game loop
@@ -179,19 +223,14 @@ int main()
         BeginDrawing();
 
         ClearBackground(WHITE);
-        const float bg_scale = 6.0f;
-        bg_x_pos -= 20 * delta_time;
-        if (bg_x_pos <= -background.width * bg_scale)
+        
+        for (auto& bg_plane : bg_planes)
         {
-            bg_x_pos = 0.0f;
+            drawScrollingBackground(bg_plane, delta_time);
         }
-        Vector2 bg1_pos{bg_x_pos, 0.0f};
-        DrawTextureEx(background, bg1_pos, 0.0f, bg_scale, WHITE);
-        Vector2 bg2_pos{bg_x_pos + background.width * bg_scale, 0.0f};
-        DrawTextureEx(background, bg2_pos, 0.0f, bg_scale, WHITE);
-
 
         DrawTextureRec(player_texture, player_anim.rect, player_anim.pos, WHITE);
+        
         for (auto& nebula : enemy_nebulas)
         {
             DrawTextureRec(enemy_nebula_texture, nebula.anim_data.rect, nebula.anim_data.pos, nebula.color);
@@ -205,7 +244,10 @@ int main()
     //--------------------------------------------------------------------------------------
     UnloadTexture(player_texture);
     UnloadTexture(enemy_nebula_texture);
-    UnloadTexture(background);
+    for (auto& bg_plane : bg_planes)
+    {
+        UnloadTexture(bg_plane.texture);
+    }
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
